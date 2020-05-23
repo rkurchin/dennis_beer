@@ -11,18 +11,25 @@ first_loc = "AUSTRALIA"
 last_loc = "WYOMING"
 
 # pull from old file?
-check_old_scores = True
+check_old_scores = False
+# if pulling from old file, should we keep entries that had no score found? (False increases runtime by checking again for every old entry that didn't have a score for any reason)
+keep_old_noscores = False
 old_filename = "beercellar_scores_2020-05-23.csv"
 
 # file to save to
 filename = "beercellar_scores_"+str(datetime.today()).split()[0]+".csv"
+
+style_dict = {"Ale": "Ale", "IPA": "IPA", "Gose":"Sour", "Lambic":"Sour", "Lager":"Lager", "Berliner Weisse":"Sour","Stout":"Stout"}
+# priority for resolving ambiguities
+priority_list = ["IPA", "Sour", "Stout", "Lager", "Ale"]
 
 start_time = time()
 
 # get old file if necessary
 if check_old_scores:
     old_data = pd.read_csv(old_filename)
-    old_data = old_data[np.isfinite(old_data.score)]
+    if not keep_old_noscores:
+        old_data = old_data[np.isfinite(old_data.score)]
     overlap = 0
 
 browser = mechanize.Browser()
@@ -87,7 +94,7 @@ for loc_link in loc_links:
             brewer = brewer.strip()
             brewer = " ".join([s.capitalize() for s in brewer.split()])
             brewer_list.append(brewer)
-            beer_list.append(brewer + " " + beer_name)
+            beer_list.append(str(brewer + " " + beer_name).strip())
         page_ind = page_ind + 1
     sleep(0.02) # so the site doesn't block us
 
@@ -108,13 +115,14 @@ ratings_list = []
 abv_list = []
 note_list = []
 link_list = []
+style_list = []
 query_count = 0
 for i in range(len(beer_list)):
     if i%50==0:
         t = time()
         print("..."+str(i)+"/"+str(len(beer_list))+"...("+str(np.round((t-time_check)/60.0,1))+" min)")
         time_check = t
-    # sleep longer every so often to avoid the throttle...hopefully
+    # pause for longer every so often to avoid the throttle...hopefully
     if query_count % 50 == 0:
         sleep(1.0)
     brewer_name = beer_list[i]
@@ -127,6 +135,7 @@ for i in range(len(beer_list)):
             abv_list.append(old_entry["abv"])
             note_list.append(old_entry["note"])
             link_list.append(old_entry["link"])
+            style_list.append(old_entry["style"])
             overlap = overlap + 1
             continue
     query_count = query_count + 1
@@ -138,14 +147,16 @@ for i in range(len(beer_list)):
     abv_list.append(beer_info.abv)
     note_list.append(beer_info.note)
     link_list.append(beer_info.link)
+    style_list.append(beer_info.style)
     sleep(0.1)
 
 # compile to dataframe and sort by score
-df = pd.DataFrame(data={'name':name_list, 'score':ratings_list, 'brewer':brewer_list, 'abv':abv_list, 'link':link_list, 'note':note_list})
+df = pd.DataFrame(data={'name':name_list, 'style':style_list, 'score':ratings_list, 'brewer':brewer_list, 'abv':abv_list, 'link':link_list, 'note':note_list})
 df = df.sort_values(by="score",ascending=False).reset_index(drop=True)
+# add generalized categories
+df["category"] = [categorize_style(style, style_dict, priority_list) for style in df['style']]
 # save results
 df.to_csv(filename, index=False)
-
 end_time = time()
 
 nopage_count = str(len(df[df.note=="couldn't find BeerAdvocate page"]))

@@ -47,19 +47,23 @@ def generate_link(beer):
     return query
 
 def beer_profile(beer):
-    beer_page = generate_link(beer)
+    # ampersands don't play nice with URLs...
+    beer_search = beer.replace("&","").replace("  ", " ")
+    beer_page = generate_link(beer_search)
     response = search.open(beer_page)
     raw = response.read()
     response.close()
     search.clear_history()
     raw = str(raw)
     # check if it wasn't found
-    ind = raw.find(beer)
+    ind = raw.find(beer_search)
     if ind==-1:
         return (-1, "none", "couldn't find BeerAdvocate page")
-    subset = raw[ind+len(beer):ind+len(beer)+10]
+    subset = raw[ind+len(beer_search):ind+len(beer_search)+10]
     if "Search" in subset:
-        #return num_search_results(raw)
+        if "Beers Found: 0" in raw:
+            # no search results
+            return (-1, "none", "couldn't find BeerAdvocate page")
         # multiple search results, find best match
         links = search.links()
         for i in range(len(links)):
@@ -86,6 +90,26 @@ def beer_profile(beer):
         link = beer_page
     return (str(raw), link, note)
 
+# bin specific style to more general categories defined by options_dict
+# there might be some prioritizations (e.g. IPA's will probably also have "Ale" in style name)
+def categorize_style(style, style_dict, priority_list):
+    match_dict = {key:False for key in style_dict.keys()}
+    for key in style_dict.keys():
+        if key in style:
+            match_dict[key] = True
+    if not any(match_dict.values()):
+        return "Other"
+    else:
+        options = [style_dict[k] for k in match_dict.keys() if match_dict[k]]
+        if len(options)==1:
+            return options[0]
+        else: # need to prioritize, find first one in priority list that is in options
+            for option in priority_list:
+                if option in options:
+                    return option
+
+
+
 class Beer:
     def __init__(self, name):
         self.name = name
@@ -95,9 +119,11 @@ class Beer:
         if type(raw)==int or type(raw)==float:
             self.score=np.nan
             self.abv="?"
+            self.style="?"
         else:
             self.score = self.get_score(raw)
             self.abv = self.get_abv(raw)
+            self.style = self.get_style(raw)
 
     def get_abv(self, raw):
         abv_pointer = raw.find('<b>ABV:</b>')
@@ -121,3 +147,10 @@ class Beer:
             return np.nan
         else:
             return int(score)
+
+    def get_style(self, raw):
+        style_pointer = raw.find("Style:")
+        style_area = raw[style_pointer:style_pointer+200]
+        style_area = style_area.split("<b>")[1]
+        style = style_area.split("</b>")[0]
+        return style
