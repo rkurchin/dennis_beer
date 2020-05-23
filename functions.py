@@ -1,4 +1,4 @@
-# parts of this are adapted from https://github.com/jfach/beer-for-python
+# parts of the Beer class in this file are adapted from https://github.com/jfach/beer-for-python
 import numpy as np
 import mechanize
 from fuzzywuzzy import fuzz
@@ -7,12 +7,29 @@ search = mechanize.Browser()
 search.set_handle_robots(False)
 search.addheaders = [("User-agent", 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.2.8) Gecko/20100722 Firefox/3.6.8 GTB7.1 (.NET CLR 3.5.30729)')]
 
+# find the line containing a given url
 def findline(lines, url):
     for line in lines:
         if url in line:
             return line
 
-def get_inds(link_list):
+# find (first) indices of first and last links to the different location pages (every link shows up multiple times)
+def get_loclink_inds(link_list, first_loc, last_loc):
+    first_link_ind = -1
+    last_link_ind = -1
+    skip_link_ind = -1
+    for i in range(len(link_list)):
+        if link_list[i].text==first_loc and first_link_ind==-1:
+            first_link_ind = i
+        elif link_list[i].text==last_loc and last_link_ind==-1:
+            last_link_ind = i
+        elif link_list[i].text=="BEER: US" and skip_link_ind==-1:
+            skip_link_ind = i
+
+    return [link_list[i].url for i in range(first_link_ind, last_link_ind+1) if not i==skip_link_ind]
+
+# on a BeerAdvocate search results page, get links to beer pages
+def get_beerlink_inds(link_list):
     start_ind = 0
     end_ind = 0
     for i in range(len(link_list)):
@@ -24,11 +41,6 @@ def get_inds(link_list):
             end_ind = i
     return (start_ind, end_ind)
 
-def num_search_results(raw):
-    ind = raw.find("Beers Found:")
-    num =  raw[ind+11:ind+20].split()[1]
-    return int("".join(num.split(",")))
-    
 def generate_link(beer):
     beer_name = beer.replace(" ", "+")
     query = "http://www.beeradvocate.com/search/?q={}&qt=beer".format(beer_name)
@@ -82,14 +94,11 @@ class Beer:
         self.link = link
         if type(raw)==int or type(raw)==float:
             self.score=np.nan
-            self.brewer="?"
             self.abv="?"
         else:
             self.score = self.get_score(raw)
-            #self.brewer = self.get_brewer(raw)
-            #self.style = self.get_style(self.name)
             self.abv = self.get_abv(raw)
-            
+
     def get_abv(self, raw):
         abv_pointer = raw.find('<b>ABV:</b>')
         abv_area = raw[abv_pointer:abv_pointer+120]
@@ -100,22 +109,6 @@ class Beer:
             return "?"
         else:
             return float(abv)
-
-    # haven't fixed this one yet
-    def get_style(self, raw):
-        style_pointer = raw.find('Style | ABV')
-        style_area = raw[style_pointer:style_pointer+100]
-        style_start = style_area.find("><b>")
-        style_end = style_area.find("</b></a>")
-        style = style_area[style_start+4:style_end]
-        return style
-
-    def get_brewer(self, raw):
-        brewer_pointer = raw.find("<title>")
-        brewer_end_pointer = raw.find("</title>")
-        brewer_area = raw[brewer_pointer+7:brewer_end_pointer]
-        brewer = brewer_area.split(" | ")[1]
-        return brewer
 
     def get_score(self, raw):
         score_pointer = raw.find("Score: ")
