@@ -11,9 +11,9 @@ first_loc = "AUSTRALIA"
 last_loc = "WYOMING"
 
 # pull from old file?
-check_old_scores = False
+check_old_scores = True
 # if pulling from old file, should we keep entries that had no score found? (False increases runtime by checking again for every old entry that didn't have a score for any reason)
-keep_old_noscores = False
+keep_old_noscores = True
 old_filename = "beercellar_scores_2020-05-23.csv"
 
 # file to save to
