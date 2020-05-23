@@ -1,10 +1,3 @@
-"""
-First check with `which python` and `which pip` to figure out if they're pointing to the same install. On my machine, I needed python and pip2 (python3 and pip respectively are for v3, which is confusing.
-
-Run this command to get this set up on a standard Mac Python install. Note that mechanize only works with python2...
-sudo -H pip2 install mechanize numpy scipy pandas fuzzywuzzy python_Levenshtein
-"""
-
 import pandas as pd
 from functions import *
 import numpy as np
@@ -31,7 +24,7 @@ if check_old_scores:
     old_data = pd.read_csv(old_filename)
     old_data = old_data[np.isfinite(old_data.score)]
     overlap = 0
-    
+
 browser = mechanize.Browser()
 browser.set_handle_robots(False)
 browser.addheaders = [("User-agent", 'Mozilla/5.0 (Windows; U; Windows NT 5.1;en-US; rv:1.9.2.8) Gecko/20100722 Firefox/3.6.8 GTB7.1 (.NET CLR 3.5.30729)')]
@@ -68,7 +61,7 @@ for loc_link in loc_links:
     links = browser.links()
     page.close()
     browser.clear_history()
-    
+
     home_link_ind = 0
     for i in range(len(links)):
         if "Home" in links[i].text:
@@ -87,7 +80,7 @@ for loc_link in loc_links:
             else:
                 page_list.append(link.base_url + link.url)
                 k = k+1
-            
+
     page_ind = 0
     for url in page_list:
         page = browser.open(url)
