@@ -4,6 +4,7 @@ from functions import *
 import numpy as np
 from time import sleep, time
 from datetime import datetime
+import sys
 
 url = 'https://belmont.craftbeercellar.com/beer-international-116/'
 
@@ -12,7 +13,7 @@ first_loc = "AUSTRALIA"
 last_loc = "WYOMING"
 
 # pull from old file?
-check_old_scores = True
+check_old_scores = False
 # if pulling from old file, should we keep entries that had no score found? (False increases runtime by checking again for every old entry that didn't have a score for any reason)
 keep_old_noscores = True
 old_filename = "beercellar_scores_2020-05-23.csv"
@@ -25,6 +26,8 @@ style_dict = {"Ale": "Ale", "IPA": "IPA", "Gose":"Sour", "Lambic":"Sour", "Lager
 priority_list = ["IPA", "Sour", "Stout", "Lager", "Ale"]
 
 start_time = time()
+
+version = sys.version_info.major
 
 # get old file if necessary
 if check_old_scores:
@@ -88,7 +91,10 @@ for loc_link in loc_links:
             beer_name = str(link.text.replace(u'\xe1','a').replace(u'\xf3','o').replace(u'\xe9','e').split(" - ")[0])
             #print(beer_name)
             name_list.append(beer_name)
-            url = str(link.attrs[0][1].decode('utf-8').replace(u'\xe1','a').replace(u'\xf3','').replace(u'\xe9',''))
+            if version==2:
+                url = str(link.attrs[0][1].decode('utf-8').replace(u'\xe1','a').replace(u'\xf3','').replace(u'\xe9',''))
+            else:
+                url = link.attrs[0][1]
             line = findline(lines, url)
             ind = line.find(url)
             subline = line[ind:ind+1000].split("Quick View")[1].split("h6")[1]
@@ -114,6 +120,7 @@ time_check = intermediate_time
 # pull beer info
 print("\n...PULLING BEERADVOCATE SCORES...\n")
 ratings_list = []
+score_list = []
 abv_list = []
 note_list = []
 link_list = []
@@ -133,7 +140,8 @@ for i in range(len(beer_list)):
     if check_old_scores:
         if name in list(old_data.name):
             old_entry = dict(old_data[old_data.name==name].iloc[0])
-            ratings_list.append(old_entry["score"])
+            ratings_list.append(old_entry["rating"])
+            score_list.append(old_entry["score"])
             abv_list.append(old_entry["abv"])
             note_list.append(old_entry["note"])
             link_list.append(old_entry["link"])
@@ -145,7 +153,8 @@ for i in range(len(beer_list)):
     if np.isnan(beer_info.score) and len(name)>2: # couldn't find it, try with just name and no brewer
         beer_info = Beer(name)
         query_count = query_count + 1
-    ratings_list.append(beer_info.score)
+    score_list.append(beer_info.score)
+    ratings_list.append(beer_info.rating)
     abv_list.append(beer_info.abv)
     note_list.append(beer_info.note)
     link_list.append(beer_info.link)
@@ -153,7 +162,7 @@ for i in range(len(beer_list)):
     sleep(0.1)
 
 # compile to dataframe and sort by score
-df = pd.DataFrame(data={'name':name_list, 'style':style_list, 'score':ratings_list, 'brewer':brewer_list, 'abv':abv_list, 'link':link_list, 'note':note_list})
+df = pd.DataFrame(data={'name':name_list, 'style':style_list, 'score':score_list, 'rating':ratings_list, 'brewer':brewer_list, 'abv':abv_list, 'link':link_list, 'note':note_list})
 df = df.sort_values(by="score",ascending=False).reset_index(drop=True)
 # add generalized categories
 df["category"] = [categorize_style(style, style_dict, priority_list) for style in df['style']]

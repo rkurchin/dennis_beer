@@ -4,6 +4,9 @@
 import numpy as np
 import mechanize
 from fuzzywuzzy import fuzz
+import sys
+
+version = sys.version_info.major
 
 search = mechanize.Browser()
 search.set_handle_robots(False)
@@ -12,7 +15,10 @@ search.addheaders = [("User-agent", 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en
 # find the line containing a given url
 def findline(lines, url):
     for line in lines:
-        line_check = line.decode('utf8').replace(u'\xe1','a').replace(u'\xf3','').replace(u'\xe9','')
+        if version==2:
+            line_check = line.decode('utf8').replace(u'\xe1','a').replace(u'\xf3','').replace(u'\xe9','')
+        else:
+            line_check = line
         if url in line_check:
             return line_check
 
@@ -111,8 +117,6 @@ def categorize_style(style, style_dict, priority_list):
                 if option in options:
                     return option
 
-
-
 class Beer:
     def __init__(self, name):
         self.name = name
@@ -123,10 +127,12 @@ class Beer:
             self.score=np.nan
             self.abv="?"
             self.style="?"
+            self.rating=np.nan
         else:
             self.score = self.get_score(raw)
             self.abv = self.get_abv(raw)
             self.style = self.get_style(raw)
+            self.rating = self.get_rating(raw)
 
     def get_abv(self, raw):
         abv_pointer = raw.find('<b>ABV:</b>')
@@ -157,3 +163,9 @@ class Beer:
         style_area = style_area.split("<b>")[1]
         style = style_area.split("</b>")[0]
         return style
+
+    def get_rating(self, raw):
+        rating_pointer = raw.find("Avg:")
+        rating_area = raw[rating_pointer:rating_pointer+200]
+        rating_area = rating_area.split('for this beer.">')[1]
+        return float(rating_area.split("</span>")[0])
