@@ -1,3 +1,5 @@
+# coding: utf8
+
 # parts of the Beer class in this file are adapted from https://github.com/jfach/beer-for-python
 import numpy as np
 import mechanize
@@ -10,8 +12,9 @@ search.addheaders = [("User-agent", 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en
 # find the line containing a given url
 def findline(lines, url):
     for line in lines:
-        if url in line:
-            return line
+        line_check = line.decode('utf8').replace(u'\xe1','a').replace(u'\xf3','').replace(u'\xe9','')
+        if url in line_check:
+            return line_check
 
 # find (first) indices of first and last links to the different location pages (every link shows up multiple times)
 def get_loclink_inds(link_list, first_loc, last_loc):

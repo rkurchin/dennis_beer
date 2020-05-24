@@ -1,3 +1,4 @@
+# coding: utf
 import pandas as pd
 from functions import *
 import numpy as np
@@ -84,13 +85,14 @@ for loc_link in loc_links:
         start_ind, end_ind = get_beerlink_inds(links)
         for j in range(start_ind, end_ind, 5):
             link = links[j]
-            beer_name = link.text.split(" - ")[0]
+            beer_name = str(link.text.replace(u'\xe1','a').replace(u'\xf3','o').replace(u'\xe9','e').split(" - ")[0])
+            #print(beer_name)
             name_list.append(beer_name)
-            url = link.attrs[0][1]
+            url = str(link.attrs[0][1].decode('utf-8').replace(u'\xe1','a').replace(u'\xf3','').replace(u'\xe9',''))
             line = findline(lines, url)
             ind = line.find(url)
             subline = line[ind:ind+1000].split("Quick View")[1].split("h6")[1]
-            brewer = subline[1:-2].lower()
+            brewer = str(subline[1:-2].lower())
             brewer = brewer.strip()
             brewer = " ".join([s.capitalize() for s in brewer.split()])
             brewer_list.append(brewer)
