@@ -138,6 +138,8 @@ class Beer:
         abv_pointer = raw.find('<b>ABV:</b>')
         abv_area = raw[abv_pointer:abv_pointer+120]
         end_ind = abv_area.find("%")
+        if end_ind==-1:
+            return "?"
         abv_area = abv_area[end_ind-10:end_ind]
         abv = abv_area.split(">")[-1]
         if abv=='':

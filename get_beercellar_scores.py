@@ -13,10 +13,10 @@ first_loc = "AUSTRALIA"
 last_loc = "WYOMING"
 
 # pull from old file?
-check_old_scores = False
+check_old_scores = True
 # if pulling from old file, should we keep entries that had no score found? (False increases runtime by checking again for every old entry that didn't have a score for any reason)
 keep_old_noscores = True
-old_filename = "beercellar_scores_2020-05-23.csv"
+old_filename = "beercellar_scores_2020-05-26.csv"
 
 # file to save to
 filename = "beercellar_scores_"+str(datetime.today()).split()[0]+".csv"
@@ -88,17 +88,17 @@ for loc_link in loc_links:
         start_ind, end_ind = get_beerlink_inds(links)
         for j in range(start_ind, end_ind, 5):
             link = links[j]
-            beer_name = str(link.text.replace(u'\xe1','a').replace(u'\xf3','o').replace(u'\xe9','e').split(" - ")[0])
+            beer_name = str(link.text.replace(u'\xe1','a').replace(u'\xf3','o').replace(u'\xe9','e').replace(u'\xf6','o').split(" - ")[0])
             #print(beer_name)
             name_list.append(beer_name)
-            if version==2:
-                url = str(link.attrs[0][1].decode('utf-8').replace(u'\xe1','a').replace(u'\xf3','').replace(u'\xe9',''))
-            else:
-                url = link.attrs[0][1]
+            url = str(link.attrs[0][1])
             line = findline(lines, url)
             ind = line.find(url)
             subline = line[ind:ind+1000].split("Quick View")[1].split("h6")[1]
-            brewer = str(subline[1:-2].lower())
+            if version==2:
+                brewer = str(subline[1:-2].replace(u'\xf6','o').replace(u'\xe1','a').replace(u'\xf3','o').replace(u'\xe9','e')).lower()
+            else:
+                brewer = str(subline[1:-2]).lower()
             brewer = brewer.strip()
             brewer = " ".join([s.capitalize() for s in brewer.split()])
             brewer_list.append(brewer)
