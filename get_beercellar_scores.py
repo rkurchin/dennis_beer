@@ -9,13 +9,13 @@ import sys
 url = 'https://belmont.craftbeercellar.com/beer-international-116/'
 
 # label on first and last links
-first_loc = "AUSTRALIA"
-last_loc = "WYOMING"
+first_loc = "Australia"
+last_loc = "Wyoming"
 
 # pull from old file?
-check_old_scores = True
+check_old_scores = False
 # if pulling from old file, should we keep entries that had no score found? (False increases runtime by checking again for every old entry that didn't have a score for any reason)
-keep_old_noscores = True
+keep_old_noscores = False
 old_filename = "beercellar_scores_2020-05-26.csv"
 
 # file to save to
@@ -53,9 +53,12 @@ brewer_list = []
 # go to each page and pull beer info
 # compile list of beers, get brewery too so that search hopefully returns just one thing
 print("\n...COLLECTING LIST OF BEERS...\n")
-for loc_link in loc_links:
-    print(loc_link[41:])
-    page = browser.open(loc_link)
+for loc_link in loc_links[:4]:
+    print(loc_link)
+    try:
+        page = browser.open(loc_link)
+    except:
+        continue
     lines = [str(l) for l in page.readlines()]
     links = browser.links()
     page.close()
@@ -74,7 +77,7 @@ for loc_link in loc_links:
         found = False
         while not found:
             link = links[home_link_ind+k]
-            if link.text=='>>':
+            if link.text=='»':
                 found = True
             else:
                 page_list.append(link.base_url + link.url)
@@ -127,6 +130,7 @@ link_list = []
 style_list = []
 query_count = 0
 for i in range(len(beer_list)):
+    #print(i)
     if i%50==0:
         t = time()
         print("..."+str(i)+"/"+str(len(beer_list))+"...("+str(np.round((t-time_check)/60.0,1))+" min)")

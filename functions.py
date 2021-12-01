@@ -46,7 +46,7 @@ def get_beerlink_inds(link_list):
         if start_ind==0 and len(l.attrs)>1:
             if l.attrs[1][1]=='product-link productnameTitle':
                 start_ind = i
-        elif (l.text=="<<" or l.text=='Get Beer Mail!' or l.text=='1') and end_ind==0:
+        elif (l.text=="<<" or l.text=='Get Beer eMail!' or l.text=='1') and end_ind==0:
             end_ind = i
     return (start_ind, end_ind)
 
@@ -75,9 +75,13 @@ def beer_profile(beer):
             return (-1, "none", "couldn't find BeerAdvocate page")
         # multiple search results, find best match
         links = search.links()
-        for i in range(len(links)):
-            if "Search Places" in links[i].text:
-                first_ind = i + 2
+        i = 1
+        found = False
+        while not found:
+            if "/beer/profile/" in links[i].url:
+                first_ind = i
+                found = True
+            i = i + 1
         link_inds = [first_ind]
         done = False
         ind = first_ind + 4
