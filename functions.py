@@ -46,7 +46,7 @@ def get_beerlink_inds(link_list):
         if start_ind==0 and len(l.attrs)>1:
             if l.attrs[1][1]=='product-link productnameTitle':
                 start_ind = i
-        elif (l.text=="<<" or l.text=='Get Beer eMail!' or l.text=='1') and end_ind==0:
+        elif (l.text=="«" or l.text=='Get Beer eMail!' or l.text=='1') and end_ind==0:
             end_ind = i
     return (start_ind, end_ind)
 
@@ -57,7 +57,7 @@ def generate_link(beer):
 
 def beer_profile(beer):
     # ampersands don't play nice with URLs...
-    beer_search = beer.replace("&","").replace("  ", " ")
+    beer_search = beer.replace("&","").replace("  ", " ").replace('\\','').replace('#','')
     beer_page = generate_link(beer_search)
     response = search.open(beer_page)
     raw = response.read()
@@ -79,7 +79,7 @@ def beer_profile(beer):
         found = False
         while not found:
             if "/beer/profile/" in links[i].url:
-                first_ind = i
+                first_ind = i+1
                 found = True
             i = i + 1
         link_inds = [first_ind]

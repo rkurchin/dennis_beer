@@ -13,10 +13,10 @@ first_loc = "Australia"
 last_loc = "Wyoming"
 
 # pull from old file?
-check_old_scores = False
+check_old_scores = True
 # if pulling from old file, should we keep entries that had no score found? (False increases runtime by checking again for every old entry that didn't have a score for any reason)
 keep_old_noscores = False
-old_filename = "beercellar_scores_2020-05-26.csv"
+old_filename = "beercellar_scores_2021-12-01.csv"
 
 # file to save to
 filename = "beercellar_scores_"+str(datetime.today()).split()[0]+".csv"
@@ -53,7 +53,7 @@ brewer_list = []
 # go to each page and pull beer info
 # compile list of beers, get brewery too so that search hopefully returns just one thing
 print("\n...COLLECTING LIST OF BEERS...\n")
-for loc_link in loc_links[:4]:
+for loc_link in loc_links:
     print(loc_link)
     try:
         page = browser.open(loc_link)
